@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schleipfenrank – Mitteilungen & Forum</title>
+  <style>
+    :root { --max: 960px; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --card:#ffffff; --bg:#f8fafc; --accent:#0ea5e9; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); font-size:14px; }
+
+    .banner { width:100%; height: 220px; overflow:hidden; }
+    .banner img { width:100%; height:100%; object-fit: cover; object-position: center 28%; }
+
+    .nav { background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:10; font-size:13px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+    .nav-inner { max-width:var(--max); margin:0 auto; padding:8px 12px; display:flex; align-items:center; gap:8px; }
+    .nav a { text-decoration:none; color:var(--ink); padding:6px 10px; border-radius:10px; cursor:pointer; transition: all .2s; }
+    .nav a:hover { background:#f1f5f9; }
+    .nav a.active { background: var(--ink); color:#fff; }
+    .title { margin-left:auto; color:var(--muted); font-size:12px; }
+
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 14px; }
+
+    .feed { display:grid; gap:12px; margin-top: 12px; }
+    .card { background: var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; box-shadow:0 2px 4px rgba(15,23,42,.08); font-size:14px; transition: transform .15s ease; }
+    .card:hover { transform: translateY(-2px); }
+    .meta { display:flex; align-items:center; gap:8px; color: var(--muted); font-size:12px; margin-bottom:6px; }
+    .avatar { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:#e2e8f0; font-size:12px; font-weight:700; color:#0f172a; }
+
+    details.composer { background: var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:14px; font-size:13px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    details.composer > summary { cursor:pointer; font-weight:600; padding:6px; border-radius:8px; background:#f8fafc; list-style:none; display:flex; align-items:center; gap:6px; }
+    details.composer > summary::before { content:"▶"; font-size:11px; transition: transform .2s; }
+    details.composer[open] > summary::before { transform: rotate(90deg); }
+    details.composer > summary:hover { background:#f1f5f9; }
+    .row { display:flex; align-items:center; gap:8px; }
+    input[type="text"], input[type="password"], textarea { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:13px; outline:none; background:#fff; }
+    input:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px #0ea5e940; }
+    .btn { cursor:pointer; border:1px solid var(--ink); background:var(--ink); color:#fff; padding:8px 12px; border-radius:10px; font-weight:700; font-size:13px; transition: background .2s; }
+    .btn:hover { background:#1e293b; }
+
+    .section-title { margin:10px 0 6px; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .empty { color:var(--muted); text-align:center; margin-top:8px; font-size:12px; }
+
+    .toast { position: fixed; right: 14px; bottom: 14px; background:#0f172a; color:#fff; padding:8px 10px; border-radius:10px; font-size:13px; opacity:0; transform: translateY(6px); transition: all .25s ease; }
+    .toast.show { opacity:1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <img src="https://i.postimg.cc/J0xL7PgD/Schleipfenrank-Foto.jpg" alt="Banner" />
+  </div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a id="tabNews" class="active">Mitteilungen</a>
+      <a id="tabForum">Forum</a>
+      <div class="title">Heizzentrale Schleipfenrank</div>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <!-- MITTEILUNGEN -->
+    <section id="viewNews">
+      <details class="composer" id="adminBox">
+        <summary>Mitteilung erstellen (Owner)</summary>
+        <div class="row" style="flex-wrap:wrap; gap:8px 10px; margin-top:10px">
+          <input id="ownerKey" type="password" placeholder="Owner-Passwort" style="max-width:220px" />
+          <input id="newsTitle" type="text" placeholder="Titel" />
+          <button id="btnPublish" class="btn">Veröffentlichen</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <textarea id="newsBody" placeholder="Inhalt..."></textarea>
+        </div>
+        <p class="empty" style="text-align:left">Nur Besitzer mit korrektem Schlüssel können veröffentlichen.</p>
+      </details>
+
+      <article id="latestNews" class="card"></article>
+      <h3 class="section-title">Ältere Mitteilungen</h3>
+      <div id="newsFeed" class="feed"></div>
+      <div id="newsEmpty" class="empty" style="display:none">Noch keine Mitteilungen.</div>
+    </section>
+
+    <!-- FORUM -->
+    <section id="viewForum" style="display:none">
+      <section class="composer">
+        <form id="msgForm">
+          <div class="row">
+            <input id="nameInput" type="text" placeholder="Dein Name" required style="max-width:240px" />
+            <button id="sendBtn" class="btn" type="submit">Senden</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <textarea id="msgText" placeholder="Deine Nachricht..." required></textarea>
+          </div>
+        </form>
+      </section>
+      <section>
+        <div id="feed" class="feed"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue, query, orderByChild, limitToLast, push } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
+
+    const firebaseConfig = { apiKey: "AIzaSyAzDv92lJ8m_P2RE3QIsvCnFLIi3548kJ8", authDomain: "schleipfenrank.firebaseapp.com", databaseURL: "https://schleipfenrank-default-rtdb.europe-west1.firebasedatabase.app", projectId: "schleipfenrank", storageBucket: "schleipfenrank.firebasestorage.app", messagingSenderId: "106862716678", appId: "1:106862716678:web:d314726d4295791622e087", measurementId: "G-2E0QNCTSXQ" };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const functions = getFunctions(app, 'europe-west1');
+
+    const tabNews=document.getElementById('tabNews');
+    const tabForum=document.getElementById('tabForum');
+    const viewNews=document.getElementById('viewNews');
+    const viewForum=document.getElementById('viewForum');
+    tabNews.addEventListener('click',()=>{tabNews.classList.add('active');tabForum.classList.remove('active');viewNews.style.display='block';viewForum.style.display='none';});
+    tabForum.addEventListener('click',()=>{tabForum.classList.add('active');tabNews.classList.remove('active');viewForum.style.display='block';viewNews.style.display='none';});
+
+    const ownerKey=document.getElementById('ownerKey');
+    const newsTitle=document.getElementById('newsTitle');
+    const newsBody=document.getElementById('newsBody');
+    const btnPublish=document.getElementById('btnPublish');
+    const createAnnouncement = httpsCallable(functions, 'createAnnouncement');
+
+    btnPublish.addEventListener('click', async ()=>{
+      const key=(ownerKey.value||'').trim();
+      const title=(newsTitle.value||'').trim();
+      const body=(newsBody.value||'').trim();
+      if(!key||!title||!body) return toast('Bitte Schlüssel, Titel und Text eingeben.');
+      try{ await createAnnouncement({ key, title, body }); newsTitle.value=''; newsBody.value=''; toast('Mitteilung veröffentlicht.'); }
+      catch(err){ toast(err?.message || 'Fehler beim Veröffentlichen.'); }
+    });
+
+    const latestNews=document.getElementById('latestNews');
+    const newsFeed=document.getElementById('newsFeed');
+    const newsEmpty=document.getElementById('newsEmpty');
+    const newsQ=query(ref(db,'announcements'),orderByChild('createdAt'),limitToLast(20));
+    onValue(newsQ,(snap)=>{
+      const vals=snap.val()||{}; const arr=Object.entries(vals).map(([id,v])=>({id,...v})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      if(arr.length===0){ latestNews.innerHTML='Noch keine Mitteilungen'; newsEmpty.style.display='block'; newsFeed.innerHTML=''; return; }
+      newsEmpty.style.display='none';
+      const latest=arr[0];
+      latestNews.innerHTML=renderNews(latest,true);
+      newsFeed.innerHTML='';
+      arr.slice(1).forEach(n=>{const div=document.createElement('div'); div.className='card'; div.innerHTML=renderNews(n,false); newsFeed.appendChild(div);});
+    });
+
+    function renderNews(n,big){ const date=n.createdAt?new Date(n.createdAt).toLocaleString():''; return `<div class="meta"><div class="avatar">N</div><div><strong>${escapeHTML(n.title||'Mitteilung')}</strong><br><span>${date}</span></div></div><div style="white-space:pre-wrap; ${big?'font-size:1.05rem':''}">${escapeHTML(n.body||'')}</div>`; }
+
+    const nameInput=document.getElementById('nameInput');
+    const msgText=document.getElementById('msgText');
+    const msgForm=document.getElementById('msgForm');
+    const feed=document.getElementById('feed');
+    msgForm.addEventListener('submit',async(e)=>{ e.preventDefault(); const authorName=(nameInput.value||'').trim(); const text=(msgText.value||'').trim(); if(!authorName||!text){return toast('Bitte Name und Text eingeben');} const now=Date.now(); await push(ref(db,'forumMessages'),{authorName,text,createdAt:now}); msgForm.reset(); nameInput.value=authorName; toast('Nachricht gesendet'); });
+
+    const forumQ=query(ref(db,'forumMessages'),orderByChild('createdAt'),limitToLast(50));
+    onValue(forumQ,(snap)=>{ const vals=snap.val()||{}; const arr=Object.entries(vals).map(([id,v])=>({id,...v})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); feed.innerHTML=''; arr.forEach(m=>{ const card=document.createElement('article'); card.className='card'; card.innerHTML=`<div class="meta"><div class="avatar">${escapeHTML((m.authorName||'G')[0].toUpperCase())}</div><div><strong>${escapeHTML(m.authorName||'Gast')}</strong><br><span>${m.createdAt?new Date(m.createdAt).toLocaleString():''}</span></div></div><div style="white-space:pre-wrap">${escapeHTML(m.text||'')}</div>`; feed.appendChild(card); }); });
+
+    const toastEl=document.getElementById('toast');
+    function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),2000); }
+    function escapeHTML(str){ if(str==null)return''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+  </script>
+</body>
+</html>
